@@ -60,50 +60,39 @@ def encrypt_with_multiple_keys(data, swap_keys, xor_keys):
         encrypted_data = combined_encrypt(encrypted_data, swap_key, xor_key)
     return encrypted_data
 
-# Função para teste de colisões e salvar os resultados em um JSON
-def collision_test(data, n_values, num_trials, block_size, output_file):
-    results = {}  # Armazena resultados de criptografias únicas
-    collisions = 0  # Contador de colisões
-    collision_data = []  # Lista para armazenar informações do teste
-    colidiu = False
+def test_collisions(num_tests, swap_key_length, xor_key_length, data_length):
+    seen_encrypted_data = set()  # Conjunto para armazenar os dados criptografados
+    collisions = 0
 
-    for n in n_values:
-        for _ in range(num_trials):
-            swap_keys, xor_keys = generate_keys(n, block_size, block_size)
-            encrypted_data = encrypt_with_multiple_keys(data, swap_keys, xor_keys)
-            encrypted_data_hex = encrypted_data.hex()  # Representação hexadecimal para comparação
-            
-            if encrypted_data_hex in results:
-                collisions += 1  # Incrementa o contador de colisões
-                colidiu = True
-            else:
-                results[encrypted_data_hex] = (n, swap_keys, xor_keys)
-            
-            # Salvar os dados de cada tentativa em uma lista
-            collision_data.append({
-                "n": n,
-                "trial": _ + 1,
-                "encrypted_data": encrypted_data_hex,
-                "collision": colidiu
-            })
-            colidiu = False
-    
-    # # Salva os dados em um arquivo JSON
-    # with open(output_file, 'w') as f:
-    #     json.dump(collision_data, f, indent=4)
-    
-    print(f"Número de colisões: {collisions} em {num_trials * len(n_values)} tentativas.")
-    print(f"Os dados foram salvos no arquivo {output_file}.")
+    for _ in range(num_tests):
+        # Gera um dado aleatório de comprimento `data_length`
+        data = secrets.token_bytes(data_length)
 
+        # Gera as chaves de criptografia
+        swap_key = generate_random_swap_key(swap_key_length)
+        xor_key = generate_random_xor_key(xor_key_length)
+
+        # Criptografa os dados
+        encrypted_data = combined_encrypt(data, swap_key, xor_key)
+
+        # Converte o bytearray para bytes
+        encrypted_data_bytes = bytes(encrypted_data)
+
+        # Verifica se o resultado já foi visto (colisão)
+        if encrypted_data_bytes in seen_encrypted_data:
+            collisions += 1
+        else:
+            seen_encrypted_data.add(encrypted_data_bytes)
+
+    return collisions
 # Parâmetros do teste
-n_values = range(1, 21)  # Testar valores de n de 1 até 20
-# num_trials = 10  # Número de tentativas para cada valor de n
-num_trials = 100000  # Número de tentativas para cada valor de n
-data = b'Hello, World!'  # Dados de exemplo
-block_size = len(data)  # Tamanho do bloco
+num_tests = 1000000  # Número de testes a serem realizados
+swap_key_length = 8  # Tamanho da chave de troca
+xor_key_length = 16  # Tamanho da chave XOR
+data_length = 16  # Tamanho dos dados a serem criptografados
 
-# Nome do arquivo JSON para salvar os resultados
-output_file = "collision_test_results.json"
+# Executar o teste de colisões
+num_collisions = test_collisions(num_tests, swap_key_length, xor_key_length, data_length)
 
-# Execução do teste de colisões e salvamento em JSON
-collision_test(data, n_values, num_trials, block_size, output_file)
+# Exibir o resultado do teste
+print(f"Número de colisões encontradas em {num_tests} testes: {num_collisions}")
