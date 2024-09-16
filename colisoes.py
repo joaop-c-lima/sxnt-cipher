@@ -86,7 +86,7 @@ def test_collisions(num_tests, swap_key_length, xor_key_length, data_length):
 
     return collisions
 # Parâmetros do teste
-num_tests = 1000000  # Número de testes a serem realizados
+num_tests = 10000000  # Número de testes a serem realizados
 swap_key_length = 8  # Tamanho da chave de troca
 xor_key_length = 16  # Tamanho da chave XOR
 data_length = 16  # Tamanho dos dados a serem criptografados
